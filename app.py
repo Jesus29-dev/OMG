@@ -1,20 +1,46 @@
-from flask import Flask
-
-from flask import render_template
-from flask import request
+from flask import Flask, render_template, request, make_response
+from wtforms import Form, StringField, FileField, validators  # Import WTForms for form validation
 
 app = Flask(__name__)
 
+# Database connection details (replace with your actual configuration)
+DATABASE_HOST = "localhost"
+DATABASE_USER = "your_username"
+DATABASE_PASSWORD = "your_password"
+DATABASE_NAME = "your_database"
+
+# Connect to database (replace with your connection logic)
+def connect_to_database():
+    # Replace this with your actual connection code
+    pass
+
+# Form class for student payment information
+class PagoCursoForm(Form):
+    telefono = StringField("Teléfono:", validators=[DataRequired(), Length(min=10, max=10), Regexp(r"^\d+$")])
+    comprobante = FileField("Comprobante:", validators=[DataRequired(), AllowedExtensions(["jpg", "jpeg", "png", "pdf"])])
+
 @app.route("/")
 def index():
-    return "<p>Hola, Mundo!</p>"
+    form = PagoCursoForm()  # Create an empty form instance
+    return render_template("pago_curso.html", form=form)  # Pass form to the template
 
-@app.route("/alumnos")
-def alumnos():
-    return render_template("alumnos.html")
+@app.route("/pago_curso", methods=["POST"])
+def pago_curso():
+    form = PagoCursoForm()  # Create a form instance with submitted data
+    if form.validate_on_submit():
+        # Get form data
+        telefono = form.telefono.data
+        comprobante = form.comprobante.data  # File object
+        # Save data to database (replace with your logic)
+        # ...
+        # Send confirmation or error message
+        message = "Pago recibido exitosamente!"
+        return render_template("pago_curso.html", form=form, message=message)
+    else:
+        # Display validation errors
+        return render_template("pago_curso.html", form=form)
 
-@app.route("/alumnos/guardar", methods=["POST"])
-def alumnosGuardar():
-    matricula = request.form["txtMatriculaFA"]
-    nombreapellido = request.form["txtNombreApellidoFA"]
-    return f"Matrícula {matricula} Nombre y Apellido {nombreapellido}"
+# ... other routes from your existing code
+
+if __name__ == "__main__":
+    app.run(debug=True)
