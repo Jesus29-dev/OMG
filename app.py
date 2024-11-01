@@ -15,12 +15,16 @@ con = mysql.connector.connect(
 app = Flask(__name__)
 
 # Configurar Pusher
+
 pusher_client = pusher.Pusher(
-app_id = "1889312"
-key = "5918e984cc31802c0cbb"
-secret = "d6fa4a63c867604e0007"
-cluster = "us2"
-    ssl=True
+  app_id='1889312',
+  key='5918e984cc31802c0cbb',
+  secret='d6fa4a63c867604e0007',
+  cluster='us2',
+  ssl=True
+)
+
+pusher_client.trigger('my-channel', 'my-event', {'message': 'hello world'})
 )
 
 def notificarActualizacionTelefonoArchivo():
