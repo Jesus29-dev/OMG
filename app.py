@@ -70,7 +70,7 @@ class PagoCursoController:
                  pago.fecha_registro, pago.estado)
         # Ejecutar query...
         app = Flask(__name__)
-app.config['SECRET_KEY'] = 'clave-secreta-aqui'
+app.config['SECRET_KEY'] = 'b0be66b1c2397a902a9b3c613c5cb53f9f6f5f1314dba71ea6d0da9c066df5ff'
 
 @app.route("/")
 def index():
