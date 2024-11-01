@@ -1,54 +1,92 @@
-from flask import Flask, render_template, request, make_response
-from wtforms import Form, StringField, FileField, validators  # Import WTForms for form validation
-import pusher
+from datetime import datetime
 
-import mysql.connector
-import datetime
-import pytz
+class PagoCurso:
+    def __init__(self, telefono, ruta_comprobante):
+        self.telefono = telefono
+        self.ruta_comprobante = ruta_comprobante
+        self.fecha_registro = datetime.now()
+        self.estado = 'PENDIENTE'
 
-app = Flask(__name__)
+        from flask_wtf import FlaskForm
+from wtforms import StringField, FileField, validators
+from wtforms.validators import DataRequired, Length, Regexp
 
-# Database connection details (replace with your actual configuration)
-con = mysql.connector.connect(
-    host="185.232.14.52",
-    database="u760464709_tst_sep",
-    user="u760464709_tst_sep_usr",
-    password="dJ0CIAFF="
-)
+class PagoCursoForm(FlaskForm):
+    telefono = StringField(
+        "Teléfono:",
+        validators=[
+            DataRequired(message="El teléfono es obligatorio"),
+            Length(min=10, max=10, message="El teléfono debe tener 10 dígitos"),
+            Regexp(r"^\d+$", message="Solo se permiten números")
+        ]
+    )
+    comprobante = FileField(
+        "Comprobante:",
+        validators=[
+            DataRequired(message="Debe adjuntar un comprobante"),
+            FileAllowed(['jpg', 'jpeg', 'png', 'pdf'], 
+                       message="Solo se permiten archivos JPG, JPEG, PNG y PDF")
+        ]
+    )
 
+    from flask import Flask, render_template, request, flash
+from werkzeug.utils import secure_filename
+import os
 
-# Connect to database (replace with your connection logic)
-def connect_to_database():
-    # Replace this with your actual connection code
-    pass
-
-# Form class for student payment information
-class PagoCursoForm(Form):
-    telefono = StringField("Teléfono:", validators=[DataRequired(), Length(min=10, max=10), Regexp(r"^\d+$")])
-    comprobante = FileField("Comprobante:", validators=[DataRequired(), AllowedExtensions(["jpg", "jpeg", "png", "pdf"])])
+class PagoCursoController:
+    def __init__(self, db_connection):
+        self.db = db_connection
+        self.UPLOAD_FOLDER = 'uploads/comprobantes'
+        
+    def procesar_pago(self, form):
+        if form.validate_on_submit():
+            try:
+                # Guardar archivo
+                filename = secure_filename(form.comprobante.data.filename)
+                ruta_archivo = os.path.join(self.UPLOAD_FOLDER, filename)
+                form.comprobante.data.save(ruta_archivo)
+                
+                # Crear registro
+                pago = PagoCurso(
+                    telefono=form.telefono.data,
+                    ruta_comprobante=ruta_archivo
+                )
+                
+                # Guardar en base de datos
+                self.guardar_pago(pago)
+                
+                return True, "Pago registrado exitosamente"
+            except Exception as e:
+                return False, f"Error al procesar el pago: {str(e)}"
+        return False, "Datos inválidos"
+    
+    def guardar_pago(self, pago):
+        # Implementación de guardado en base de datos
+        query = """
+        INSERT INTO pagos_curso (telefono, ruta_comprobante, fecha_registro, estado)
+        VALUES (%s, %s, %s, %s)
+        """
+        values = (pago.telefono, pago.ruta_comprobante, 
+                 pago.fecha_registro, pago.estado)
+        # Ejecutar query...
+        app = Flask(__name__)
+app.config['SECRET_KEY'] = 'clave-secreta-aqui'
 
 @app.route("/")
 def index():
-    form = PagoCursoForm()  # Create an empty form instance
-    return render_template("pago_curso.html", form=form)  # Pass form to the template
+    form = PagoCursoForm()
+    return render_template("pago_curso.html", form=form)
 
 @app.route("/pago_curso", methods=["POST"])
 def pago_curso():
-    form = PagoCursoForm()  # Create a form instance with submitted data
-    if form.validate_on_submit():
-        # Get form data
-        telefono = form.telefono.data
-        comprobante = form.comprobante.data  # File object
-        # Save data to database (replace with your logic)
-        # ...
-        # Send confirmation or error message
-        message = "Pago recibido exitosamente!"
-        return render_template("pago_curso.html", form=form, message=message)
+    form = PagoCursoForm()
+    controller = PagoCursoController(db_connection)
+    
+    success, message = controller.procesar_pago(form)
+    
+    if success:
+        flash(message, 'success')
     else:
-        # Display validation errors
-        return render_template("pago_curso.html", form=form)
-
-# ... other routes from your existing code
-
-if __name__ == "__main__":
-    app.run(debug=True)
+        flash(message, 'error')
+        
+    return render_template("pago_curso.html", form=form)
