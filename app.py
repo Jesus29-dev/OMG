@@ -9,10 +9,13 @@ import pytz
 app = Flask(__name__)
 
 # Database connection details (replace with your actual configuration)
-DATABASE_HOST = "localhost"
-DATABASE_USER = "your_username"
-DATABASE_PASSWORD = "your_password"
-DATABASE_NAME = "your_database"
+con = mysql.connector.connect(
+    host="185.232.14.52",
+    database="u760464709_tst_sep",
+    user="u760464709_tst_sep_usr",
+    password="dJ0CIAFF="
+)
+
 
 # Connect to database (replace with your connection logic)
 def connect_to_database():
