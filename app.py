@@ -1,104 +1,133 @@
-from datetime import datetime
+from flask import Flask, render_template, request, jsonify, make_response
+import pusher
+import mysql.connector
 
-class PagoCurso:
-    def __init__(self, telefono, ruta_comprobante):
-        self.telefono = telefono
-        self.ruta_comprobante = ruta_comprobante
-        self.fecha_registro = datetime.now()
-        self.estado = 'PENDIENTE'
-
-        from flask_wtf import FlaskForm
-from wtforms import StringField, FileField, validators
-from wtforms.validators import DataRequired, Length, Regexp
-
-class PagoCursoForm(FlaskForm):
-    telefono = StringField(
-        "Teléfono:",
-        validators=[
-            DataRequired(message="El teléfono es obligatorio"),
-            Length(min=10, max=10, message="El teléfono debe tener 10 dígitos"),
-            Regexp(r"^\d+$", message="Solo se permiten números")
-        ]
-    )
-    comprobante = FileField(
-        "Comprobante:",
-        validators=[
-            DataRequired(message="Debe adjuntar un comprobante"),
-            FileAllowed(['jpg', 'jpeg', 'png', 'pdf'], 
-                       message="Solo se permiten archivos JPG, JPEG, PNG y PDF")
-        ]
-    )
-
-    from flask import Flask, render_template, request, flash
-from werkzeug.utils import secure_filename
-import os
-
-class PagoCursoController:
-    def __init__(self, db_connection):
-        self.db = db_connection
-        self.UPLOAD_FOLDER = 'uploads/comprobantes'
-
-    import pusher
-
-pusher_client = pusher.Pusher(
-  app_id='1889312',
-  key='5918e984cc31802c0cbb',
-  secret='d6fa4a63c867604e0007',
-  cluster='us2',
-  ssl=True
+# Configuración de la base de datos
+con = mysql.connector.connect(
+    host="185.232.14.52",
+    database="u760464709_tst_sep",
+    user="u760464709_tst_sep_usr",
+    password="dJ0CIAFF="
 )
 
-pusher_client.trigger('my-channel', 'my-event', {'message': 'hello world'})
-        
-    def procesar_pago(self, form):
-        if form.validate_on_submit():
-            try:
-                # Guardar archivo
-                filename = secure_filename(form.comprobante.data.filename)
-                ruta_archivo = os.path.join(self.UPLOAD_FOLDER, filename)
-                form.comprobante.data.save(ruta_archivo)
-                
-                # Crear registro
-                pago = PagoCurso(
-                    telefono=form.telefono.data,
-                    ruta_comprobante=ruta_archivo
-                )
-                
-                # Guardar en base de datos
-                self.guardar_pago(pago)
-                
-                return True, "Pago registrado exitosamente"
-            except Exception as e:
-                return False, f"Error al procesar el pago: {str(e)}"
-        return False, "Datos inválidos"
-    
-    def guardar_pago(self, pago):
-        # Implementación de guardado en base de datos
-        query = """
-        INSERT INTO pagos_curso (telefono, ruta_comprobante, fecha_registro, estado)
-        VALUES (%s, %s, %s, %s)
-        """
-        values = (pago.telefono, pago.ruta_comprobante, 
-                 pago.fecha_registro, pago.estado)
-        # Ejecutar query...
-        app = Flask(__name__)
-app.config['SECRET_KEY'] = 'b0be66b1c2397a902a9b3c613c5cb53f9f6f5f1314dba71ea6d0da9c066df5ff'
 
+# Inicializar la aplicación Flask
+app = Flask(__name__)
+
+# Configurar Pusher
+pusher_client = pusher.Pusher(
+    app_id="1867163",
+    key="2358693f2b619b363f59",
+    secret="880f60b50e86e4555c43",
+    cluster="us2",
+    ssl=True
+)
+
+def notificarActualizacionTelefonoArchivo():
+    pusher_client.trigger("CanalPago_curso", "pago-curso", {})
+
+# Página principal
 @app.route("/")
 def index():
-    form = PagoCursoForm()
-    return render_template("pago_curso.html", form=form)
+     #return render_template("Formulario.html")
+      return render_template("Pago-Curso.html")
 
-@app.route("/pago_curso", methods=["POST"])
-def pago_curso():
-    form = PagoCursoForm()
-    controller = PagoCursoController(db_connection)
+# Ruta para buscar pagos en la base de datos
+@app.route("/buscar")
+def buscar():
+    if not con.is_connected():
+        con.reconnect()
+
+    cursor = con.cursor()
+    cursor.execute("""
+    SELECT Id_Curso_Pago, Telefono, Archivo FROM tst0_cursos_pagos 
+    ORDER BY Id_Curso_Pago DESC
+    LIMIT 10 OFFSET 0
+    """)
     
-    success, message = controller.procesar_pago(form)
+    registros = cursor.fetchall()
+    con.close()
+
+    return make_response(jsonify(registros))
+
+# Ruta para registrar un nuevo pago y activar el evento Pusher
+@app.route("/registrar", methods=["POST"])
+def registrar():
+    if not con.is_connected():
+        con.reconnect()
+
+    id = request.form.get("id")
+    Telefono = request.form.get("Telefono")
+    Archivo = request.form.get("Archivo")
     
-    if success:
-        flash(message, 'success')
+    cursor = con.cursor()
+
+    if id:
+        sql = """
+        UPDATE tst0_cursos_pagos SET
+        Telefono = %s,
+        Archivo = %s
+        WHERE Id_Curso_Pago = %s
+        """
+        val = (Telefono, Archivo, id)
     else:
-        flash(message, 'error')
-        
-    return render_template("pago_curso.html", form=form)
+        sql = """
+        INSERT INTO tst0_cursos_pagos (Telefono, Archivo)
+        VALUES (%s, %s)
+        """
+        val = (Telefono, Archivo)
+    
+    cursor.execute(sql, val)
+    con.commit()
+    cursor.close()
+
+    notificarActualizacionTelefonoArchivo()
+    return make_response(jsonify({}))
+
+# Ruta para editar un registro existente
+@app.route("/editar", methods=["GET"])
+def editar():
+    if not con.is_connected():
+        con.reconnect()
+
+    id = request.args.get("id")
+
+    cursor = con.cursor(dictionary=True)
+    sql = """
+    SELECT Id_Curso_Pago, Telefono, Archivo FROM tst0_cursos_pagos
+    WHERE Id_Curso_Pago = %s
+    """
+    val = (id,)
+
+    cursor.execute(sql, val)
+    registros = cursor.fetchall()
+    con.close()
+
+    return make_response(jsonify(registros))
+
+# Ruta para eliminar un registro
+@app.route("/eliminar", methods=["POST"])
+def eliminar():
+    if not con.is_connected():
+        con.reconnect()
+
+    id = request.form.get("id")
+
+    cursor = con.cursor()
+    sql = """
+    DELETE FROM tst0_cursos_pagos
+    WHERE Id_Curso_Pago = %s
+    """
+    val = (id,)
+
+    cursor.execute(sql, val)
+    con.commit()
+    con.close()
+
+    notificarActualizacionTelefonoArchivo()
+
+    return make_response(jsonify({}))
+
+# Iniciar la aplicación
+if __name__ == "__main__":
+    app.run(debug=True)
