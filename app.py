@@ -37,6 +37,18 @@ class PagoCursoController:
     def __init__(self, db_connection):
         self.db = db_connection
         self.UPLOAD_FOLDER = 'uploads/comprobantes'
+
+    import pusher
+
+pusher_client = pusher.Pusher(
+  app_id='1889312',
+  key='5918e984cc31802c0cbb',
+  secret='d6fa4a63c867604e0007',
+  cluster='us2',
+  ssl=True
+)
+
+pusher_client.trigger('my-channel', 'my-event', {'message': 'hello world'})
         
     def procesar_pago(self, form):
         if form.validate_on_submit():
