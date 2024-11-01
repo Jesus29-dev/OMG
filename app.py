@@ -16,10 +16,10 @@ app = Flask(__name__)
 
 # Configurar Pusher
 pusher_client = pusher.Pusher(
-    app_id="1867163",
-    key="2358693f2b619b363f59",
-    secret="880f60b50e86e4555c43",
-    cluster="us2",
+app_id = "1889312"
+key = "5918e984cc31802c0cbb"
+secret = "d6fa4a63c867604e0007"
+cluster = "us2"
     ssl=True
 )
 
