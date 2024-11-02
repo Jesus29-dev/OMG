@@ -14,7 +14,7 @@ con = mysql.connector.connect(
 # Inicializar la aplicación Flask
 app = Flask(__name__)
 
-# Configurar Pusher
+import pusher
 
 pusher_client = pusher.Pusher(
   app_id='1889312',
@@ -25,7 +25,6 @@ pusher_client = pusher.Pusher(
 )
 
 pusher_client.trigger('my-channel', 'my-event', {'message': 'hello world'})
-)
 
 def notificarActualizacionTelefonoArchivo():
     pusher_client.trigger("CanalPago_curso", "pago-curso", {})
