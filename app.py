@@ -2,6 +2,15 @@ from flask import Flask, render_template, request, jsonify, make_response
 import pusher
 import mysql.connector
 
+import pusher
+
+import mysql.connector
+import mysql.connector.error
+
+import datetime
+import pytz
+
+
 # Configuración de la base de datos
 con = mysql.connector.connect(
     host="185.232.14.52",
