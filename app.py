@@ -10,6 +10,7 @@ import mysql.connector.error
 import datetime
 import pytz
 
+form flask_cors import CORS, cross_origin
 
 # Configuración de la base de datos
 con = mysql.connector.connect(
