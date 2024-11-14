@@ -23,7 +23,7 @@ con = mysql.connector.connect(
 
 # Inicializar la aplicación Flask
 app = Flask(__name__)
-
+CORSS(app)
 import pusher
 
 pusher_client = pusher.Pusher(
