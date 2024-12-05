@@ -27,7 +27,7 @@ app = Flask(__name__)
 def index():
     con.close()
 
-    return render_template("app.html")
+    return render_template("Pago-Curso.html")
 
 @app.route("/alumnos")
 def alumnos():
