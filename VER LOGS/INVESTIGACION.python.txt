@@ -1,0 +1,57 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+def f(x, y):
+    return y - x**2 + 1  # Ecuación diferencial: dy/dx = y - x^2 + 1
+
+# Implementación del método de Euler mejorado
+def euler_mejorado(f, x0, y0, h, n):
+    x = np.zeros(n+1)
+    y = np.zeros(n+1)
+    x[0] = x0
+    y[0] = y0
+    
+    for i in range(n):
+        x[i+1] = x[i] + h
+        k1 = f(x[i], y[i])
+        k2 = f(x[i+1], y[i] + h*k1)
+        y[i+1] = y[i] + h/2 * (k1 + k2)
+    
+    return x, y
+
+# Solución analítica (para comparación)
+def solucion_analitica(x):
+    return (x + 1)**2 - 0.5*np.exp(x)
+
+# Parámetros
+x0 = 0
+y0 = 0.5
+h = 0.1
+n = 20
+
+# Aplicar el método
+x_euler, y_euler = euler_mejorado(f, x0, y0, h, n)
+
+# Generar puntos para la solución analítica
+x_analitica = np.linspace(x0, x0 + n*h, 100)
+y_analitica = solucion_analitica(x_analitica)
+
+# Crear tabla de resultados
+tabla_euler = np.column_stack((x_euler, y_euler))
+
+# Imprimir tabla
+print("Tabla de resultados - Método de Euler Mejorado:")
+print("   x       y")
+for i in range(min(11, n+1)):  # Mostrar solo los primeros 11 puntos
+    print(f"{x_euler[i]:.1f}    {y_euler[i]:.6f}")
+
+# Graficar resultados
+plt.figure(figsize=(10, 6))
+plt.plot(x_euler, y_euler, 'bo-', label='Euler Mejorado')
+plt.plot(x_analitica, y_analitica, 'r-', label='Solución Analítica')
+plt.xlabel('x')
+plt.ylabel('y')
+plt.title('Método de Euler Mejorado vs Solución Analítica')
+plt.grid(True)
+plt.legend()
+plt.show()

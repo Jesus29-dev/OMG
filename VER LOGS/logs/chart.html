@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gráfico de Acciones en Tiempo Real</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<canvas id="myChart" style="width:100%;max-width:900px"></canvas>
+
+<script>
+let chart;
+
+function cargarDatosYActualizar() {
+  fetch('sistema.log', { cache: "no-store" })
+
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('No se pudo cargar sistema.logs');
+            }
+            return response.text();
+        })
+        .then(text => {
+            console.log("Datos cargados:", text);
+            const lines = text.split('\n');
+            const accionesContadas = {
+                "MOVIMIENTO": 0,
+                "ATAQUE": 0,
+                "AVISO": 0,
+            };
+
+            lines.forEach(line => {
+                if (line.includes("AVISO")) accionesContadas["AVISO"]++;
+                else if (line.includes("MOVIMIENTO")) accionesContadas["MOVIMIENTO"]++;
+                else if (line.includes("ATAQUE")) accionesContadas["ATAQUE"]++;
+            });
+
+            console.log("Conteo de acciones:", accionesContadas);
+
+            const labels = Object.keys(accionesContadas);
+            const valores = Object.values(accionesContadas);
+
+            if (!chart) {
+                const ctx = document.getElementById("myChart").getContext("2d");
+                chart = new Chart(ctx, {
+                    type: "bar",
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: "Inicio de sesion",
+                            backgroundColor: ["blue", "green", "orange", "red", "purple", "gray"],
+                            data: valores
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+            } else {
+                chart.data.labels = labels;
+                chart.data.datasets[0].data = valores;
+                chart.update();
+            }
+        })
+        .catch(error => console.error('Error al cargar datos:', error));
+}
+
+cargarDatosYActualizar();
+setInterval(cargarDatosYActualizar, 1000);
+
+</script>
+
+</body>
+</html>
