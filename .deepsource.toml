@@ -3,6 +3,27 @@ version = 1
 [[analyzers]]
 name = "javascript"
 
+  [analyzers.meta]
+  plugins = [
+    "react",
+    "angular",
+    "vue",
+    "ember",
+    "meteor",
+    "angularjs"
+  ]
+  environment = [
+    "nodejs",
+    "jquery",
+    "browser",
+    "mongo",
+    "cypress",
+    "jest",
+    "mocha",
+    "vitest",
+    "jasmine"
+  ]
+
 [[analyzers]]
 name = "php"
 
@@ -11,3 +32,6 @@ name = "python"
 
   [analyzers.meta]
   runtime_version = "3.x.x"
+
+[[transformers]]
+name = "php-cs-fixer"
