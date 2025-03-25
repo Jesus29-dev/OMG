@@ -1,4 +1,5 @@
 <?php
+
 // eliminar_registro.php
 session_start();
 if (!isset($_SESSION['username'])) {
@@ -17,14 +18,14 @@ if (!$id) {
 try {
     $conn = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    
+
     // Preparar la consulta DELETE
     $stmt = $conn->prepare("DELETE FROM registro_acciones WHERE id = :id");
     $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-    
+
     // Ejecutar la consulta
     $stmt->execute();
-    
+
     // Verificar si se eliminó algún registro
     if ($stmt->rowCount() > 0) {
         // Registro eliminado exitosamente
@@ -43,4 +44,3 @@ try {
 
 // Cerrar la conexión
 $conn = null;
-?>

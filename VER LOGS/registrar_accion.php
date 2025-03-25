@@ -1,4 +1,5 @@
 <?php
+
 // registrar_accion.php
 session_start();
 if (!isset($_SESSION['username'])) {
@@ -23,4 +24,3 @@ if (!in_array($nivel, ['AVISO', 'MOVIMIENTO', 'ATAQUE'])) {
 
 registrarAccion($_SESSION['username'], $accion, $nivel);
 echo 'OK';
-?>

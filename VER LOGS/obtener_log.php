@@ -1,4 +1,5 @@
 <?php
+
 session_start();
 if (!isset($_SESSION['username'])) {
     exit('No autorizado');
@@ -6,4 +7,3 @@ if (!isset($_SESSION['username'])) {
 
 $logContent = file_get_contents('logs/sistema.log');
 echo $logContent;
-?>
