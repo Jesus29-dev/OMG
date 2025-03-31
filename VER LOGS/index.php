@@ -24,8 +24,8 @@ if (!isset($_SESSION['username'])) {
             </ul>
         </nav>
         <main id="contenido-principal">
-            <h1>Bienvenido, <?php echo $_SESSION['username']; ?></h1>
-            <div id="resultados"></div>
+         <h1>Bienvenido, <?php echo htmlspecialchars($_SESSION['username'] ?? ''); ?></h1>
+<div id="resultados"></div>
         </main>
     </div>
 </body>
