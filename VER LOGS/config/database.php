@@ -1,4 +1,5 @@
 <?php
+
 $host = 'localhost';
 $dbname = 'sistema_log';
 $username = 'root';
@@ -18,36 +19,37 @@ try {
 }
 
 // Función para registrar acciones
-function registrarAccion($usuario, $accion, $nivel) {
+function registrarAccion($usuario, $accion, $nivel)
+{
     global $pdo;
-    
+
     // Validación de entradas
     if (empty($usuario) || empty($accion) || empty($nivel)) {
         error_log("Intento de registro con datos inválidos");
         return false;
     }
-    
+
     try {
         $sql = "INSERT INTO registro_acciones (usuario, accion, nivel, fecha) VALUES (?, ?, ?, NOW())";
         $stmt = $pdo->prepare($sql);
-        
+
         // Ejecutar con valores tipados
         $stmt->execute([$usuario, $accion, $nivel]);
-        
+
         // También guardamos en archivo log
-        $logMessage = date('Y-m-d H:i:s') . " - Usuario: " . htmlspecialchars($usuario) . 
-                      " - Acción: " . htmlspecialchars($accion) . 
+        $logMessage = date('Y-m-d H:i:s') . " - Usuario: " . htmlspecialchars($usuario) .
+                      " - Acción: " . htmlspecialchars($accion) .
                       " - Nivel: " . intval($nivel) . "\n";
-        
+
         // Asegurar la ruta del archivo log
         $logPath = dirname(__FILE__) . '/logs/sistema.log';
-        
+
         // Verificar que el directorio existe
         $logDir = dirname($logPath);
         if (!file_exists($logDir)) {
             mkdir($logDir, 0755, true);
         }
-        
+
         // Verificar permisos de escritura
         if (is_writable($logDir)) {
             file_put_contents($logPath, $logMessage, FILE_APPEND);
@@ -61,4 +63,3 @@ function registrarAccion($usuario, $accion, $nivel) {
         return false;
     }
 }
-?>
